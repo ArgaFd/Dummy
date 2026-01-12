@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { menuAPI, orderAPI, paymentAPI, type MenuItem } from '../services/api';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { menuAPI, type MenuItem } from '../services/api';
 
 interface CartItem {
   id: number;
@@ -9,16 +9,13 @@ interface CartItem {
 
 const MenuPage = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const tableNumber = searchParams.get('table');
-  const [selectedTableNumber, setSelectedTableNumber] = useState<number>(parseInt(tableNumber || '1'));
   const [activeCategory, setActiveCategory] = useState('semua');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [customerName, setCustomerName] = useState('');
-  const [showCheckout, setShowCheckout] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'manual'>('qris');
 
   const categories = [
     { id: 'semua', name: 'Semua Menu', icon: '🍽️' },
@@ -81,69 +78,20 @@ const MenuPage = () => {
     return total + (item ? item.price * cartItem.quantity : 0);
   }, 0);
 
-  const handleCheckout = async () => {
-    if (!customerName.trim()) {
-      alert('Silakan masukkan nama pelanggan');
-      return;
-    }
-
-    if (!selectedTableNumber || Number.isNaN(selectedTableNumber) || selectedTableNumber < 1) {
-      alert('Silakan masukkan nomor meja yang valid');
-      return;
-    }
-
+  const handleCheckout = () => {
     if (cart.length === 0) {
       alert('Keranjang masih kosong');
       return;
     }
 
-    try {
-      const orderData = {
-        tableNumber: selectedTableNumber,
-        customerName: customerName.trim(),
-        items: cart.map((item) => ({
-          menuId: item.id,
-          quantity: item.quantity,
-        })),
-      };
-
-      // Guest flow: no login required
-      const orderResponse = await orderAPI.createGuest(orderData);
-      if (orderResponse.data.success) {
-        const order = orderResponse.data.data;
-
-        if (paymentMethod === 'manual') {
-          const paymentResponse = await paymentAPI.guestManual({ orderId: order.id });
-          if (paymentResponse.data.success) {
-            alert('Pesanan berhasil dibuat. Silakan lakukan pembayaran manual ke kasir.');
-            setCart([]);
-            setShowCart(false);
-            setShowCheckout(false);
-            setCustomerName('');
-          }
-          return;
-        }
-
-        const qrisResponse = await paymentAPI.guestQris({
-          orderId: order.id,
-          customer: {
-            first_name: customerName.trim(),
-          },
-        });
-
-        if (qrisResponse.data.success) {
-          const redirectUrl = qrisResponse.data.data?.midtrans?.redirect_url;
-          if (redirectUrl) {
-            window.location.href = redirectUrl;
-            return;
-          }
-          alert('Gagal memulai pembayaran QRIS. Silakan coba lagi.');
-        }
+    // Navigate to checkout page with cart data
+    navigate('/checkout', {
+      state: {
+        cart,
+        menuItems,
+        tableNumber: tableNumber || '1'
       }
-    } catch (error) {
-      console.error('Checkout failed:', error);
-      alert('Gagal memproses pesanan. Silakan coba lagi.');
-    }
+    });
   };
 
   if (loading) {
@@ -173,7 +121,7 @@ const MenuPage = () => {
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900">Digital Menu</h1>
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <span className="bg-orange-100 text-orange-600 px-2 py-1 rounded-full font-semibold">
-                    🪑 Meja {selectedTableNumber}
+                    🪑 Meja {tableNumber || '1'}
                   </span>
                   <span className="hidden lg:inline text-gray-400">•</span>
                   <span className="hidden lg:inline text-gray-600">{filteredItems.length} items available</span>
@@ -407,7 +355,7 @@ const MenuPage = () => {
                           </div>
                           
                           <button
-                            onClick={() => setShowCheckout(true)}
+                            onClick={handleCheckout}
                             className="w-full bg-gradient-to-r from-orange-400 to-red-500 text-white py-4 rounded-2xl font-black text-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                           >
                             Proceed to Checkout
@@ -417,122 +365,6 @@ const MenuPage = () => {
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Checkout Modal */}
-      {showCheckout && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div 
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" 
-              onClick={() => setShowCheckout(false)}
-            />
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                    <h3 className="text-2xl font-black text-gray-900 mb-6">Checkout</h3>
-                    
-                    <div className="mb-6">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nomor Meja
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        value={selectedTableNumber}
-                        onChange={(e) => setSelectedTableNumber(parseInt(e.target.value || '1'))}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 mb-4"
-                        placeholder="Masukkan nomor meja"
-                      />
-
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nama Customer
-                      </label>
-                      <input
-                        type="text"
-                        value={customerName}
-                        onChange={(e) => setCustomerName(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        placeholder="Masukkan nama Anda"
-                      />
-                    </div>
-
-                    <div className="mb-6">
-                      <h4 className="font-bold text-gray-900 mb-4">Order Summary:</h4>
-                      <div className="space-y-2">
-                        {cart.map(cartItem => {
-                          const menuItem = menuItems.find(item => item.id === cartItem.id);
-                          if (!menuItem) return null;
-                          
-                          return (
-                            <div key={cartItem.id} className="flex justify-between text-sm">
-                              <span>{menuItem.name} x {cartItem.quantity}</span>
-                              <span>Rp {(menuItem.price * cartItem.quantity).toLocaleString('id-ID')}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <div className="mt-4 pt-4 border-t">
-                        <div className="flex justify-between font-black text-lg">
-                          <span>Total:</span>
-                          <span className="text-orange-600">Rp {totalAmount.toLocaleString('id-ID')}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mb-2">
-                      <h4 className="font-bold text-gray-900 mb-3">Metode Pembayaran</h4>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setPaymentMethod('qris')}
-                          className={`p-4 rounded-xl border text-left transition-all ${
-                            paymentMethod === 'qris'
-                              ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
-                              : 'border-gray-200 bg-white hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className="font-black text-gray-900">QRIS</div>
-                          <div className="text-xs text-gray-600 mt-1">Bayar via QRIS (Midtrans)</div>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPaymentMethod('manual')}
-                          className={`p-4 rounded-xl border text-left transition-all ${
-                            paymentMethod === 'manual'
-                              ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
-                              : 'border-gray-200 bg-white hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className="font-black text-gray-900">Manual</div>
-                          <div className="text-xs text-gray-600 mt-1">Bayar ke kasir</div>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button
-                  type="button"
-                  className="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-3 bg-gradient-to-r from-orange-400 to-red-500 text-base font-black text-white hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:ml-3 sm:w-auto sm:text-sm"
-                  onClick={handleCheckout}
-                  disabled={!customerName.trim()}
-                >
-                  {paymentMethod === 'qris' ? 'Bayar dengan QRIS' : 'Buat Pesanan'}
-                </button>
-                <button
-                  type="button"
-                  className="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-3 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                  onClick={() => setShowCheckout(false)}
-                >
-                  Cancel
-                </button>
               </div>
             </div>
           </div>

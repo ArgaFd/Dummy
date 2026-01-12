@@ -8,6 +8,9 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
 import DashboardPage from './pages/DashboardPage';
+import CheckoutPage from './pages/checkout/CheckoutPage';
+import PaymentPage from './pages/payment/PaymentPage';
+import OrderStatusPage from './pages/order-status/OrderStatusPage';
 
 // Layout Components
 const AdminLayout = () => (
@@ -76,6 +79,11 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/scan" element={<QRScanner />} />
           <Route path="/menu" element={<MenuPage />} />
+          
+          {/* Order Flow Routes */}
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/order-status" element={<OrderStatusPage />} />
           
           {/* Admin Routes */}
           <Route element={<AdminRoute />}>
