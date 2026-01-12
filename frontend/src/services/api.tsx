@@ -113,6 +113,9 @@ export const orderAPI = {
   getAll: (params = {}): Promise<AxiosResponse<ApiResponse<Order[]>>> => api.get(API_ENDPOINTS.ORDERS, { params }),
   getById: (id: number): Promise<AxiosResponse<ApiResponse<Order>>> => api.get(`${API_ENDPOINTS.ORDERS}/${id}`),
   create: (orderData: { tableNumber: number; customerName: string; items: { menuId: number; quantity: number }[] }): Promise<AxiosResponse<ApiResponse<Order>>> => api.post(API_ENDPOINTS.ORDERS, orderData),
+  createGuest: (orderData: { tableNumber: number; customerName: string; items: { menuId: number; quantity: number }[] }): Promise<AxiosResponse<ApiResponse<any>>> =>
+    api.post(`${API_ENDPOINTS.ORDERS}/guest`, orderData),
+  getGuestById: (id: number): Promise<AxiosResponse<ApiResponse<any>>> => api.get(`${API_ENDPOINTS.ORDERS}/guest/${id}`),
   updateStatus: (orderId: number, status: string): Promise<AxiosResponse<ApiResponse<Order>>> => 
     api.put(`${API_ENDPOINTS.ORDERS}/${orderId}/status`, { status }),
   getMyOrders: (): Promise<AxiosResponse<ApiResponse<Order[]>>> => api.get(`${API_ENDPOINTS.ORDERS}/my`),
@@ -125,6 +128,10 @@ export const paymentAPI = {
   getById: (id: number): Promise<AxiosResponse<ApiResponse<Payment>>> => api.get(`${API_ENDPOINTS.PAYMENTS}/${id}`),
   updateStatus: (id: number, status: string): Promise<AxiosResponse<ApiResponse<Payment>>> => 
     api.put(`${API_ENDPOINTS.PAYMENTS}/${id}/status`, { status }),
+  guestQris: (payload: { orderId: number; customer?: any }): Promise<AxiosResponse<ApiResponse<any>>> =>
+    api.post(`${API_ENDPOINTS.PAYMENTS}/guest/qris`, payload),
+  guestManual: (payload: { orderId: number }): Promise<AxiosResponse<ApiResponse<any>>> =>
+    api.post(`${API_ENDPOINTS.PAYMENTS}/guest/manual`, payload),
 };
 
 // Reports API
