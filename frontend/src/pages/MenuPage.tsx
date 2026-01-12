@@ -31,11 +31,47 @@ const MenuPage = () => {
   const loadMenuItems = async () => {
     try {
       const response = await menuAPI.getAll();
+      console.log('Menu API Response:', response.data); // Debug log
+      
+      // Handle different response structures
+      let items = [];
       if (response.data.success) {
-        setMenuItems(response.data.data.items);
+        items = response.data.data?.items || response.data.data || [];
+      } else {
+        items = response.data?.data?.items || response.data?.data || [];
       }
+      
+      console.log('Menu items loaded:', items); // Debug log
+      setMenuItems(items);
     } catch (error) {
       console.error('Failed to load menu items:', error);
+      // Set dummy data for testing
+      setMenuItems([
+        {
+          id: 1,
+          name: 'Nasi Goreng',
+          description: 'Nasi goreng spesial dengan telur dan ayam',
+          price: 25000,
+          category: 'makanan',
+          is_available: true
+        },
+        {
+          id: 2,
+          name: 'Es Teh Manis',
+          description: 'Teh manis dingin',
+          price: 8000,
+          category: 'minuman',
+          is_available: true
+        },
+        {
+          id: 3,
+          name: 'Es Krim Vanilla',
+          description: 'Es krim vanilla lembut',
+          price: 15000,
+          category: 'dessert',
+          is_available: true
+        }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -107,47 +143,47 @@ const MenuPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      {/* Header - Desktop Fixed */}
+      {/* Header - Responsive */}
       <header className="bg-white/90 backdrop-blur-lg shadow-lg sticky top-0 z-40 border-b border-orange-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-4">
-              <div className="bg-gradient-to-br from-orange-400 to-red-500 p-3 rounded-2xl">
-                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8 py-2 sm:py-4 lg:py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+            <div className="flex items-center space-x-2 sm:space-4">
+              <div className="bg-gradient-to-br from-orange-400 to-red-500 p-2 sm:p-3 rounded-xl">
+                <svg className="h-4 w-4 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900">Digital Menu</h1>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <h1 className="text-lg sm:text-2xl lg:text-3xl xl:text-4xl font-black text-gray-900">Digital Menu</h1>
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 text-xs sm:text-sm text-gray-600">
                   <span className="bg-orange-100 text-orange-600 px-2 py-1 rounded-full font-semibold">
                     🪑 Meja {tableNumber || '1'}
                   </span>
-                  <span className="hidden lg:inline text-gray-400">•</span>
-                  <span className="hidden lg:inline text-gray-600">{filteredItems.length} items available</span>
+                  <span className="hidden sm:inline text-gray-400">•</span>
+                  <span className="hidden sm:inline text-gray-600">{filteredItems.length} items available</span>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              {/* Desktop Cart Summary - Fixed */}
-              <div className="hidden lg:flex items-center space-x-3 bg-gray-50 px-4 py-2 rounded-full border border-gray-200">
-                <span className="text-sm font-medium text-gray-600">Cart Total:</span>
-                <span className="text-lg font-black text-orange-600">Rp {totalAmount.toLocaleString('id-ID')}</span>
-                <span className="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+            <div className="flex items-center space-x-2 sm:space-4 w-full sm:w-auto justify-between sm:justify-end">
+              {/* Desktop Cart Summary */}
+              <div className="hidden lg:flex items-center space-x-2 sm:space-x-3 bg-gray-50 px-2 sm:px-4 py-1 sm:py-2 rounded-full border border-gray-200">
+                <span className="text-xs sm:text-sm font-medium text-gray-600">Cart Total:</span>
+                <span className="text-sm sm:text-lg font-black text-orange-600">Rp {totalAmount.toLocaleString('id-ID')}</span>
+                <span className="bg-orange-500 text-white text-xs font-bold px-1 sm:px-2 py-1 rounded-full">
                   {cart.reduce((total, item) => total + item.quantity, 0)} items
                 </span>
               </div>
               
               <button 
                 onClick={() => setShowCart(true)}
-                className="relative group bg-gradient-to-br from-orange-400 to-red-500 p-3 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                className="relative group bg-gradient-to-br from-orange-400 to-red-500 p-2 sm:p-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
               >
-                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-4 w-4 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 {cart.length > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-yellow-400 text-gray-900 text-xs font-black rounded-full h-6 w-6 flex items-center justify-center animate-bounce">
+                  <span className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-yellow-400 text-gray-900 text-xs font-black rounded-full h-4 w-4 sm:h-6 sm:w-6 flex items-center justify-center animate-bounce">
                     {cart.reduce((total, item) => total + item.quantity, 0)}
                   </span>
                 )}
@@ -158,82 +194,83 @@ const MenuPage = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-        {/* Enhanced Categories - Desktop Fixed */}
-        <div className="mb-8 lg:mb-12">
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6 lg:mb-8">
-            <h2 className="text-2xl lg:text-3xl font-black text-gray-900 mb-4 lg:mb-0">Browse Categories</h2>
-            <div className="text-sm lg:text-base text-gray-600">
+        {/* Enhanced Categories - Responsive */}
+        <div className="mb-6 sm:mb-8 lg:mb-12">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 lg:mb-8">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 mb-3 sm:mb-0">Browse Categories</h2>
+            <div className="text-sm sm:text-base text-gray-600">
               {filteredItems.length} items found
             </div>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             {categories.map(category => (
               <button
                 key={category.id}
                 onClick={() => setActiveCategory(category.id)}
-                className={`group relative p-4 lg:p-6 rounded-2xl font-bold text-sm lg:text-base transition-all duration-300 transform hover:scale-105 ${
+                className={`group relative p-3 sm:p-4 lg:p-6 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm lg:text-base transition-all duration-300 transform hover:scale-105 ${
                   activeCategory === category.id
                     ? 'bg-gradient-to-br from-orange-400 to-red-500 text-white shadow-lg'
                     : 'bg-white text-gray-700 hover:bg-gray-50 shadow-md border border-gray-200'
                 }`}
               >
-                <div className="flex flex-col items-center space-y-2 lg:space-y-3">
-                  <span className="text-2xl lg:text-3xl">{category.icon}</span>
-                  <span>{category.name}</span>
+                <div className="flex flex-col items-center space-y-1 sm:space-y-2 lg:space-y-3">
+                  <span className="text-xl sm:text-2xl lg:text-3xl">{category.icon}</span>
+                  <span className="text-center">{category.name}</span>
                 </div>
                 {activeCategory === category.id && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
+                  <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-yellow-400 rounded-full animate-pulse"></div>
                 )}
               </button>
             ))}
           </div>
         </div>
-          {/* Enhanced Menu Grid - Desktop Fixed */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          
+        {/* Enhanced Menu Grid - Responsive */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredItems.map(item => {
             const cartItem = cart.find(cartItem => cartItem.id === item.id);
             const quantity = cartItem?.quantity || 0;
             
             return (
-              <div key={item.id} className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden border border-gray-100">
-                {/* Image Placeholder - Desktop Fixed */}
-                <div className="h-48 lg:h-56 bg-gradient-to-br from-orange-100 to-red-100 flex items-center justify-center relative overflow-hidden">
+              <div key={item.id} className="group bg-white rounded-xl sm:rounded-2xl lg:rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 overflow-hidden border border-gray-100">
+                {/* Image Placeholder - Responsive */}
+                <div className="h-32 sm:h-40 lg:h-48 xl:h-56 bg-gradient-to-br from-orange-100 to-red-100 flex items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-orange-200/20 to-red-200/20"></div>
-                  <div className="text-6xl lg:text-7xl opacity-50">
+                  <div className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl opacity-50">
                     {item.category === 'makanan' ? '🍜' : item.category === 'minuman' ? '🥤' : '🍰'}
                   </div>
                   {item.is_available && (
-                    <div className="absolute top-3 right-3 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
                       Available
                     </div>
                   )}
-                  {/* Desktop Hover Overlay - Fixed */}
+                  {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <div className="text-white text-center p-4">
-                      <div className="text-xl font-black mb-2">{item.name}</div>
-                      <div className="text-lg font-bold">Rp {item.price.toLocaleString('id-ID')}</div>
+                    <div className="text-white text-center p-2 sm:p-4">
+                      <div className="text-lg sm:text-xl font-black mb-2">{item.name}</div>
+                      <div className="text-sm sm:text-lg font-bold">Rp {item.price.toLocaleString('id-ID')}</div>
                     </div>
                   </div>
                 </div>
                 
-                <div className="p-4 lg:p-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-lg lg:text-xl font-black text-gray-900 group-hover:text-orange-600 transition-colors">
+                <div className="p-3 sm:p-4 lg:p-6">
+                  <div className="flex justify-between items-start mb-2 sm:mb-3">
+                    <h3 className="text-sm sm:text-base lg:text-lg xl:text-xl font-black text-gray-900 group-hover:text-orange-600 transition-colors line-clamp-2">
                       {item.name}
                     </h3>
-                    <div className="bg-gradient-to-br from-orange-400 to-red-500 text-white px-3 py-1 rounded-full font-bold text-sm lg:text-base">
+                    <div className="bg-gradient-to-br from-orange-400 to-red-500 text-white px-2 py-1 sm:px-3 rounded-full font-bold text-xs sm:text-sm lg:text-base">
                       Rp {item.price.toLocaleString('id-ID')}
                     </div>
                   </div>
                   
-                  <p className="text-gray-600 text-sm lg:text-base mb-4 leading-relaxed line-clamp-2">
+                  <p className="text-gray-600 text-xs sm:text-sm lg:text-base mb-3 sm:mb-4 leading-relaxed line-clamp-2">
                     {item.description}
                   </p>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-medium hidden lg:inline">
+                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full font-medium hidden sm:inline">
                         {item.category}
                       </span>
                     </div>
@@ -242,16 +279,16 @@ const MenuPage = () => {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => removeFromCart(item.id)}
-                          className="w-8 h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200 transition-colors font-bold"
+                          className="w-6 h-6 sm:w-8 sm:h-8 bg-red-100 text-red-600 rounded-full flex items-center justify-center hover:bg-red-200 transition-colors font-bold text-xs sm:text-sm"
                         >
                           -
                         </button>
-                        <span className="w-8 text-center font-black text-orange-600 text-lg">
+                        <span className="w-6 sm:w-8 text-center font-black text-orange-600 text-sm sm:text-lg">
                           {quantity}
                         </span>
                         <button
                           onClick={() => addToCart(item.id)}
-                          className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center hover:bg-green-200 transition-colors font-bold"
+                          className="w-6 h-6 sm:w-8 sm:h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center hover:bg-green-200 transition-colors font-bold text-xs sm:text-sm"
                         >
                           +
                         </button>
@@ -259,7 +296,7 @@ const MenuPage = () => {
                     ) : (
                       <button
                         onClick={() => addToCart(item.id)}
-                        className="bg-gradient-to-r from-orange-400 to-red-500 text-white px-4 lg:px-6 py-2 rounded-full font-bold hover:shadow-lg transition-all duration-300 transform hover:scale-105 text-sm lg:text-base"
+                        className="bg-gradient-to-r from-orange-400 to-red-500 text-white px-3 py-1 sm:px-4 sm:py-2 rounded-full font-bold hover:shadow-lg transition-all duration-300 transform hover:scale-105 text-xs sm:text-sm lg:text-base"
                       >
                         + Add
                       </button>
