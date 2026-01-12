@@ -11,6 +11,9 @@ import DashboardPage from './pages/DashboardPage';
 import CheckoutPage from './pages/checkout/CheckoutPage';
 import PaymentPage from './pages/payment/PaymentPage';
 import OrderStatusPage from './pages/order-status/OrderStatusPage';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import StaffPortal from './pages/staff/StaffPortal';
+import CustomerPortal from './pages/customer/CustomerPortal';
 
 // Layout Components
 const AdminLayout = () => (
@@ -87,18 +90,20 @@ function App() {
           
           {/* Admin Routes */}
           <Route element={<AdminRoute />}>
-            <Route path="/admin/dashboard" element={<DashboardPage />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/*" element={<AdminLayout />} />
           </Route>
           
           {/* Staff Routes */}
           <Route element={<StaffRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/staff/portal" element={<StaffPortal />} />
             <Route path="/staff/*" element={<StaffLayout />} />
           </Route>
           
           {/* Customer Routes */}
           <Route element={<CustomerRoute />}>
+            <Route path="/customer/portal" element={<CustomerPortal />} />
             <Route path="/customer/*" element={<CustomerLayout />} />
           </Route>
           
