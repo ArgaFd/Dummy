@@ -21,8 +21,8 @@ const CheckoutPage: React.FC<CheckoutPageProps> = () => {
 
   const [customerName, setCustomerName] = useState('');
   const [selectedTableNumber, setSelectedTableNumber] = useState(parseInt(tableNumber || '1'));
-  // Set default to qris for Midtrans sandbox
-  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'manual' | 'mock'>('qris');
+  // Set default to manual for simplicity
+  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'manual' | 'mock'>('manual');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const totalAmount = cart.reduce((total: number, cartItem: CartItem) => {
@@ -165,25 +165,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = () => {
             <div className="mt-8">
               <h2 className="text-xl font-black text-gray-900 mb-6">Metode Pembayaran</h2>
               
-              <div className="grid md:grid-cols-3 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('qris')}
-                  className={`p-6 rounded-2xl border text-left transition-all ${
-                    paymentMethod === 'qris'
-                      ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
-                      : 'border-gray-200 bg-white hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="text-4xl">📱</div>
-                    <div>
-                      <div className="font-black text-gray-900">QRIS</div>
-                      <div className="text-sm text-gray-600 mt-1">Midtrans Sandbox</div>
-                    </div>
-                  </div>
-                </button>
-                
+              <div className="grid md:grid-cols-2 gap-4">
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('manual')}
@@ -196,26 +178,8 @@ const CheckoutPage: React.FC<CheckoutPageProps> = () => {
                   <div className="flex items-center space-x-4">
                     <div className="text-4xl">💰</div>
                     <div>
-                      <div className="font-black text-gray-900">Manual</div>
-                      <div className="text-sm text-gray-600 mt-1">Bayar ke kasir</div>
-                    </div>
-                  </div>
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('mock')}
-                  className={`p-6 rounded-2xl border text-left transition-all ${
-                    paymentMethod === 'mock'
-                      ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
-                      : 'border-gray-200 bg-white hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="text-4xl">🚀</div>
-                    <div>
-                      <div className="font-black text-gray-900">Mock</div>
-                      <div className="text-sm text-gray-600 mt-1">Testing Only</div>
+                      <div className="font-black text-gray-900">Manual Payment</div>
+                      <div className="text-sm text-gray-600 mt-1">Bayar ke Kasir (Recommended)</div>
                     </div>
                   </div>
                 </button>
