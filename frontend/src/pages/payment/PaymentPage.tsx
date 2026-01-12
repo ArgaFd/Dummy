@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { orderAPI, paymentAPI } from '../../services/api';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface PaymentPageProps {}
 
 const PaymentPage: React.FC<PaymentPageProps> = () => {
@@ -19,27 +20,10 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
   const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
   const [orderCreated, setOrderCreated] = useState(false);
 
-  useEffect(() => {
-    if (!orderData) {
-      navigate('/menu');
-      return;
-    }
-
-    if (paymentMethod === 'qris') {
-      processPayment();
-    } else {
-      createManualOrder();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (timeLeft > 0 && paymentMethod === 'qris') {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && paymentMethod === 'qris') {
-      handlePaymentTimeout();
-    }
-  }, [timeLeft, paymentMethod]);
+  const handlePaymentTimeout = () => {
+    alert('Waktu pembayaran habis. Silakan coba lagi.');
+    navigate('/menu');
+  };
 
   const processPayment = async () => {
     setIsProcessing(true);
@@ -108,16 +92,27 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
     }
   };
 
-  const handlePaymentTimeout = () => {
-    alert('Waktu pembayaran habis. Silakan coba lagi.');
-    navigate('/menu');
-  };
+  useEffect(() => {
+    if (!orderData) {
+      navigate('/menu');
+      return;
+    }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+    if (paymentMethod === 'qris') {
+      processPayment();
+    } else {
+      createManualOrder();
+    }
+  }, [orderData, navigate, paymentMethod, processPayment, createManualOrder]);
+
+  useEffect(() => {
+    if (timeLeft > 0 && paymentMethod === 'qris') {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (timeLeft === 0 && paymentMethod === 'qris') {
+      handlePaymentTimeout();
+    }
+  }, [timeLeft, paymentMethod, handlePaymentTimeout]);
 
   const handlePaymentComplete = () => {
     navigate('/order-status', {
@@ -126,6 +121,12 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
         paymentMethod
       }
     });
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   if (isProcessing && !orderCreated) {

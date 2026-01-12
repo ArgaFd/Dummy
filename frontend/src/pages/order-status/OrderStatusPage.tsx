@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { orderAPI } from '../../services/api';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface OrderStatusPageProps {}
 
 interface OrderStatus {
@@ -43,7 +44,7 @@ const OrderStatusPage: React.FC<OrderStatusPageProps> = () => {
     const interval = setInterval(fetchOrderStatus, 5000); // Poll every 5 seconds
     
     return () => clearInterval(interval);
-  }, [orderId]);
+  }, [orderId, navigate]);
 
   const fetchOrderStatus = async () => {
     try {
