@@ -47,9 +47,10 @@ const CheckoutPage: React.FC<CheckoutPageProps> = () => {
       const orderData = {
         tableNumber: selectedTableNumber,
         customerName: customerName.trim(),
-        items: cart.map((item) => ({
+        items: cart.map((item: CartItem) => ({
           menuId: item.id,
           quantity: item.quantity,
+          price: menuItems.find((menuItem: MenuItem) => menuItem.id === item.id)?.price,
         })),
       };
 
