@@ -21,8 +21,8 @@ const CheckoutPage: React.FC<CheckoutPageProps> = () => {
 
   const [customerName, setCustomerName] = useState('');
   const [selectedTableNumber, setSelectedTableNumber] = useState(parseInt(tableNumber || '1'));
-  // Set default to manual for now
-  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'manual'>('manual');
+  // Set default to mock for now
+  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'manual' | 'mock'>('mock');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const totalAmount = cart.reduce((total: number, cartItem: CartItem) => {
@@ -41,18 +41,13 @@ const CheckoutPage: React.FC<CheckoutPageProps> = () => {
       return;
     }
 
-    if (cart.length === 0) {
-      alert('Keranjang masih kosong');
-      return;
-    }
-
     setIsProcessing(true);
 
     try {
       const orderData = {
         tableNumber: selectedTableNumber,
         customerName: customerName.trim(),
-        items: cart.map((item: CartItem) => ({
+        items: cart.map((item) => ({
           menuId: item.id,
           quantity: item.quantity,
         })),
@@ -172,6 +167,24 @@ const CheckoutPage: React.FC<CheckoutPageProps> = () => {
               <div className="grid md:grid-cols-2 gap-4">
                 <button
                   type="button"
+                  onClick={() => setPaymentMethod('mock')}
+                  className={`p-6 rounded-2xl border text-left transition-all ${
+                    paymentMethod === 'mock'
+                      ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
+                      : 'border-gray-200 bg-white hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="text-4xl">🚀</div>
+                    <div>
+                      <div className="font-black text-gray-900">Mock Payment</div>
+                      <div className="text-sm text-gray-600 mt-1">Testing (Recommended)</div>
+                    </div>
+                  </div>
+                </button>
+                
+                <button
+                  type="button"
                   onClick={() => setPaymentMethod('manual')}
                   className={`p-6 rounded-2xl border text-left transition-all ${
                     paymentMethod === 'manual'
@@ -183,26 +196,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = () => {
                     <div className="text-4xl">💰</div>
                     <div>
                       <div className="font-black text-gray-900">Manual</div>
-                      <div className="text-sm text-gray-600 mt-1">Bayar ke kasir (Recommended)</div>
-                    </div>
-                  </div>
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('qris')}
-                  className={`p-6 rounded-2xl border text-left transition-all opacity-50 cursor-not-allowed ${
-                    paymentMethod === 'qris'
-                      ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
-                      : 'border-gray-200 bg-white hover:bg-gray-50'
-                  }`}
-                  disabled
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="text-4xl">📱</div>
-                    <div>
-                      <div className="font-black text-gray-900">QRIS</div>
-                      <div className="text-sm text-gray-600 mt-1">Maintenance</div>
+                      <div className="text-sm text-gray-600 mt-1">Bayar ke kasir</div>
                     </div>
                   </div>
                 </button>
