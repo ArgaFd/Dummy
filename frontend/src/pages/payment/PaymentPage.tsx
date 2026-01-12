@@ -28,8 +28,12 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
   const processPayment = async () => {
     setIsProcessing(true);
     try {
+      console.log('Processing payment with orderData:', orderData); // Debug log
+      
       // Create order first
       const orderResponse = await orderAPI.createGuest(orderData);
+      console.log('Order response:', orderResponse.data); // Debug log
+      
       if (orderResponse.data.success) {
         const order = orderResponse.data.data;
         setOrderId(order.id);
@@ -42,20 +46,31 @@ const PaymentPage: React.FC<PaymentPageProps> = () => {
             first_name: orderData.customerName,
           },
         });
+        
+        console.log('Payment response:', paymentResponse.data); // Debug log
 
         if (paymentResponse.data.success) {
           const redirectUrl = paymentResponse.data.data?.midtrans?.redirect_url;
           if (redirectUrl) {
             setPaymentUrl(redirectUrl);
           } else {
-            alert('Gagal memulai pembayaran QRIS. Silakan coba lagi.');
+            console.error('No redirect URL in payment response');
+            alert('Gagal memulai pembayaran QRIS. Tidak ada URL redirect.');
             navigate('/menu');
           }
+        } else {
+          console.error('Payment API failed:', paymentResponse.data);
+          alert('Gagal memproses pembayaran: ' + (paymentResponse.data.message || 'Unknown error'));
+          navigate('/menu');
         }
+      } else {
+        console.error('Order creation failed:', orderResponse.data);
+        alert('Gagal membuat pesanan: ' + (orderResponse.data.message || 'Unknown error'));
+        navigate('/menu');
       }
     } catch (error) {
       console.error('Payment processing failed:', error);
-      alert('Gagal memproses pembayaran. Silakan coba lagi.');
+      alert('Gagal memproses pembayaran. Silakan coba lagi.\nError: ' + (error as Error).message);
       navigate('/menu');
     } finally {
       setIsProcessing(false);

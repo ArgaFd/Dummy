@@ -21,7 +21,7 @@ const MenuPage = () => {
     { id: 'semua', name: 'Semua Menu', icon: '🍽️' },
     { id: 'makanan', name: 'Makanan', icon: '🍜' },
     { id: 'minuman', name: 'Minuman', icon: '🥤' },
-    { id: 'dessert', name: 'Dessert', icon: '🍰' }
+    { id: 'starter/snack', name: 'Snack', icon: '🍟' }
   ];
 
   useEffect(() => {
@@ -45,33 +45,8 @@ const MenuPage = () => {
       setMenuItems(items);
     } catch (error) {
       console.error('Failed to load menu items:', error);
-      // Set dummy data for testing
-      setMenuItems([
-        {
-          id: 1,
-          name: 'Nasi Goreng',
-          description: 'Nasi goreng spesial dengan telur dan ayam',
-          price: 25000,
-          category: 'makanan',
-          is_available: true
-        },
-        {
-          id: 2,
-          name: 'Es Teh Manis',
-          description: 'Teh manis dingin',
-          price: 8000,
-          category: 'minuman',
-          is_available: true
-        },
-        {
-          id: 3,
-          name: 'Es Krim Vanilla',
-          description: 'Es krim vanilla lembut',
-          price: 15000,
-          category: 'dessert',
-          is_available: true
-        }
-      ]);
+      // Set empty array to show "no items" message instead of dummy data
+      setMenuItems([]);
     } finally {
       setLoading(false);
     }
@@ -238,7 +213,9 @@ const MenuPage = () => {
                 <div className="h-32 sm:h-40 lg:h-48 xl:h-56 bg-gradient-to-br from-orange-100 to-red-100 flex items-center justify-center relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-orange-200/20 to-red-200/20"></div>
                   <div className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl opacity-50">
-                    {item.category === 'makanan' ? '🍜' : item.category === 'minuman' ? '🥤' : '🍰'}
+                    {item.category === 'makanan' ? '🍜' : 
+                     item.category === 'minuman' ? '🥤' : 
+                     item.category === 'starter/snack' ? '🍟' : '🍽️'}
                   </div>
                   {item.is_available && (
                     <div className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
