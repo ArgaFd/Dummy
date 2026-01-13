@@ -2,13 +2,17 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminRoute, StaffRoute, CustomerRoute } from './components/auth/ProtectedRoute';
 import { QRScanner } from './components/qr/QRScanner';
-import MenuPage from './pages/MenuPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import DashboardPage from './pages/DashboardPage';
+import DashboardLayout from './layouts/DashboardLayout';
+import UserManagementPage from './pages/owner/UserManagementPage';
+import MenuManagementPage from './pages/owner/MenuManagementPage';
+import ReportsPage from './pages/owner/ReportsPage';
+import MenuPage from './pages/MenuPage';
 
 // Layout Components
 const AdminLayout = () => (
@@ -78,24 +82,32 @@ function App() {
           <Route path="/scan" element={<QRScanner />} />
           <Route path="/menu" element={<MenuPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
-          
-          {/* Owner Routes */}
+
+          {/* Owner Routes - Protected */}
           <Route element={<AdminRoute />}>
-            <Route path="/owner/dashboard" element={<DashboardPage />} />
+            <Route element={<DashboardLayout />}>
+              <Route path="/owner/dashboard" element={<DashboardPage />} />
+              <Route path="/owner/users" element={<UserManagementPage />} />
+              <Route path="/owner/menu" element={<MenuManagementPage />} />
+              <Route path="/owner/reports" element={<ReportsPage />} />
+            </Route>
             <Route path="/owner/*" element={<AdminLayout />} />
           </Route>
-          
+
           {/* Staff Routes */}
           <Route element={<StaffRoute />}>
-            <Route path="/staff/orders" element={<DashboardPage />} />
+            <Route element={<DashboardLayout />}>
+              <Route path="/staff/orders" element={<DashboardPage />} />
+              <Route path="/staff/payments" element={<DashboardPage />} />
+            </Route>
             <Route path="/staff/*" element={<StaffLayout />} />
           </Route>
-          
+
           {/* Customer Routes */}
           <Route element={<CustomerRoute />}>
             <Route path="/customer/*" element={<CustomerLayout />} />
           </Route>
-          
+
           {/* 404 Not Found */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

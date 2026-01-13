@@ -29,7 +29,7 @@ app.use(helmet());
 app.use(
   cors({
     origin: [
-      'http://localhost:5173', 
+      'http://localhost:5173',
       'http://localhost:3000',
       process.env.FRONTEND_URL
     ].filter(Boolean), // Remove any undefined values
@@ -45,9 +45,9 @@ const apiLimiter = rateLimit({
   max: 300, // Limit each IP to 300 requests per windowMs
   standardHeaders: 'draft-7',
   legacyHeaders: false,
-  message: { 
-    success: false, 
-    message: 'Terlalu banyak permintaan dari IP ini, silakan coba lagi nanti' 
+  message: {
+    success: false,
+    message: 'Terlalu banyak permintaan dari IP ini, silakan coba lagi nanti'
   }
 });
 
@@ -57,9 +57,9 @@ const paymentLimiter = rateLimit({
   max: 10, // Limit each IP to 10 payment requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
-  message: { 
-    success: false, 
-    message: 'Terlalu banyak permintaan pembayaran, silakan coba lagi nanti' 
+  message: {
+    success: false,
+    message: 'Terlalu banyak permintaan pembayaran, silakan coba lagi nanti'
   },
   keyGenerator: (req) => req.ip
 });
@@ -82,12 +82,17 @@ app.use((req, res, next) => {
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
   });
+});
+
+// Root endpoint to check if API is running
+app.get('/', (req, res) => {
+  res.send('API Restaurant App sudah berjalan!');
 });
 
 // API Routes

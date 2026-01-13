@@ -7,13 +7,15 @@ const toUser = (row) => {
     name: row.name,
     email: row.email,
     role: row.role,
+    status: row.status, // Added status
     passwordHash: row.password_hash,
   };
 };
 
 const findByEmail = async (email) => {
   const pool = getPool();
-  const { rows } = await pool.query('SELECT id, name, email, role, password_hash FROM users WHERE email = $1', [
+  // Added status to select
+  const { rows } = await pool.query('SELECT id, name, email, role, status, password_hash FROM users WHERE email = $1', [
     String(email).toLowerCase(),
   ]);
   return toUser(rows[0]);
@@ -21,23 +23,32 @@ const findByEmail = async (email) => {
 
 const findById = async (id) => {
   const pool = getPool();
-  const { rows } = await pool.query('SELECT id, name, email, role, password_hash FROM users WHERE id = $1', [Number(id)]);
+  // Added status to select
+  const { rows } = await pool.query('SELECT id, name, email, role, status, password_hash FROM users WHERE id = $1', [Number(id)]);
   return toUser(rows[0]);
 };
 
-const createUser = async ({ name, email, passwordHash, role }) => {
+const createUser = async ({ name, email, passwordHash, role, status }) => {
   const pool = getPool();
+  // Added status to insert
   const { rows } = await pool.query(
-    'INSERT INTO users(name, email, password_hash, role) VALUES($1,$2,$3,$4) RETURNING id, name, email, role, password_hash',
-    [String(name), String(email).toLowerCase(), String(passwordHash), String(role)]
+    'INSERT INTO users(name, email, password_hash, role, status) VALUES($1,$2,$3,$4,$5) RETURNING id, name, email, role, status, password_hash',
+    [String(name), String(email).toLowerCase(), String(passwordHash), String(role), String(status || 'active')]
   );
   return toUser(rows[0]);
 };
 
 const getAll = async () => {
   const pool = getPool();
-  const { rows } = await pool.query('SELECT id, name, email, role FROM users ORDER BY id ASC');
-  return rows.map((r) => ({ id: Number(r.id), name: r.name, email: r.email, role: r.role }));
+  // Added status to select
+  const { rows } = await pool.query('SELECT id, name, email, role, status FROM users ORDER BY id ASC');
+  return rows.map((r) => ({
+    id: Number(r.id),
+    name: r.name,
+    email: r.email,
+    role: r.role,
+    status: r.status
+  }));
 };
 
 const ownerExists = async () => {
@@ -48,13 +59,31 @@ const ownerExists = async () => {
 
 const updateRole = async (id, role) => {
   const pool = getPool();
-  const { rows } = await pool.query('UPDATE users SET role = $2 WHERE id = $1 RETURNING id, name, email, role', [
+  const { rows } = await pool.query('UPDATE users SET role = $2 WHERE id = $1 RETURNING id, name, email, role, status', [
     Number(id),
     String(role),
   ]);
   const r = rows[0];
   if (!r) return null;
-  return { id: Number(r.id), name: r.name, email: r.email, role: r.role };
+  return { id: Number(r.id), name: r.name, email: r.email, role: r.role, status: r.status };
+};
+
+const updateUser = async (id, { name, email, role, status }) => {
+  const pool = getPool();
+  // Updated query to handle optional updates for name, email, role, and status
+  const { rows } = await pool.query(
+    `UPDATE users SET 
+      name = COALESCE($2, name), 
+      email = COALESCE($3, email),
+      role = COALESCE($4, role),
+      status = COALESCE($5, status)
+     WHERE id = $1 
+     RETURNING id, name, email, role, status`,
+    [Number(id), name, email, role, status]
+  );
+  const r = rows[0];
+  if (!r) return null;
+  return { id: Number(r.id), name: r.name, email: r.email, role: r.role, status: r.status };
 };
 
 const remove = async (id) => {
@@ -70,5 +99,6 @@ module.exports = {
   getAll,
   ownerExists,
   updateRole,
+  updateUser,
   remove,
 };

@@ -30,37 +30,47 @@ export interface MenuItem {
 
 export interface Order {
   id: number;
-  table_number: number;
-  customer_name: string;
-  total_amount: number;
+  tableNumber: number;
+  customerName: string;
+  totalAmount: number;
   status: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   items: OrderItem[];
 }
 
 export interface OrderItem {
   id: number;
-  order_id: number;
-  menu_id: number;
+  menuId: number;
   quantity: number;
-  unit_price: number;
-  total_price: number;
+  unitPrice: number;
+  totalPrice?: number; // Backend might not calculate this per item in schema, usually computed on fly or just unitPrice * quantity
 }
 
 export interface Payment {
   id: number;
-  order_id: number;
+  orderId: number;
   amount: number;
-  payment_method: string;
+  paymentMethod: string;
   status: string;
-  created_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Create axios instance with base URL
+// 1. Setup Instance Utama (Main API Client)
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: DEFAULT_HEADERS,
+  headers: { "Content-Type": "application/json", 'Accept': 'application/json' },
+  withCredentials: true, // PENTING: Ini yang membuat browser otomatis kirim Cookie
+  timeout: 15000,
+});
+
+// 2. Setup Instance Khusus File (Blob) - Exported for use in specific file upload/download services if needed
+export const apiFileClient = axios.create({
+  baseURL: API_BASE_URL,
+  withCredentials: true, // PENTING
+  responseType: "blob",
+  timeout: 30000,
 });
 
 // Add request interceptor to include auth token
@@ -98,6 +108,14 @@ export const authAPI = {
   getMe: (): Promise<AxiosResponse<ApiResponse<any>>> => api.get(API_ENDPOINTS.ME),
 };
 
+// User API
+export const userAPI = {
+  getAll: (): Promise<AxiosResponse<ApiResponse<any[]>>> => api.get(API_ENDPOINTS.USERS),
+  create: (userData: any): Promise<AxiosResponse<ApiResponse<any>>> => api.post(API_ENDPOINTS.USERS, userData),
+  update: (id: number, userData: any): Promise<AxiosResponse<ApiResponse<any>>> => api.put(`${API_ENDPOINTS.USERS}/${id}`, userData),
+  delete: (id: number): Promise<AxiosResponse<ApiResponse<any>>> => api.delete(`${API_ENDPOINTS.USERS}/${id}`),
+};
+
 // Menu API
 export const menuAPI = {
   getAll: (): Promise<AxiosResponse<ApiResponse<{ items: MenuItem[] }>>> => api.get(API_ENDPOINTS.MENU),
@@ -116,7 +134,7 @@ export const orderAPI = {
   createGuest: (orderData: { tableNumber: number; customerName: string; items: { menuId: number; quantity: number }[] }): Promise<AxiosResponse<ApiResponse<any>>> =>
     api.post(`${API_ENDPOINTS.ORDERS}/guest`, orderData),
   getGuestById: (id: number): Promise<AxiosResponse<ApiResponse<any>>> => api.get(`${API_ENDPOINTS.ORDERS}/guest/${id}`),
-  updateStatus: (orderId: number, status: string): Promise<AxiosResponse<ApiResponse<Order>>> => 
+  updateStatus: (orderId: number, status: string): Promise<AxiosResponse<ApiResponse<Order>>> =>
     api.put(`${API_ENDPOINTS.ORDERS}/${orderId}/status`, { status }),
   getMyOrders: (): Promise<AxiosResponse<ApiResponse<Order[]>>> => api.get(`${API_ENDPOINTS.ORDERS}/my`),
 };
@@ -126,21 +144,21 @@ export const paymentAPI = {
   create: (paymentData: { order_id: number; amount: number; payment_method: string }): Promise<AxiosResponse<ApiResponse<Payment>>> => api.post(API_ENDPOINTS.PAYMENTS, paymentData),
   getAll: (): Promise<AxiosResponse<ApiResponse<{ payments: Payment[]; totalItems: number; totalPages: number; currentPage: number }>>> => api.get(API_ENDPOINTS.PAYMENTS),
   getById: (id: number): Promise<AxiosResponse<ApiResponse<Payment>>> => api.get(`${API_ENDPOINTS.PAYMENTS}/${id}`),
-  updateStatus: (id: number, status: string): Promise<AxiosResponse<ApiResponse<Payment>>> => 
+  updateStatus: (id: number, status: string): Promise<AxiosResponse<ApiResponse<Payment>>> =>
     api.put(`${API_ENDPOINTS.PAYMENTS}/${id}/status`, { status }),
-  guestQris: (payload: { orderId: number; customer?: any }): Promise<AxiosResponse<ApiResponse<any>>> =>
-    api.post(`${API_ENDPOINTS.PAYMENTS}/guest/qris`, payload),
+  guestDigital: (payload: { orderId: number; customer?: any }): Promise<AxiosResponse<ApiResponse<any>>> =>
+    api.post(`${API_ENDPOINTS.PAYMENTS}/guest/pay`, payload),
   guestManual: (payload: { orderId: number }): Promise<AxiosResponse<ApiResponse<any>>> =>
     api.post(`${API_ENDPOINTS.PAYMENTS}/guest/manual`, payload),
 };
 
 // Reports API
 export const reportAPI = {
-  getDailyReport: (date: string): Promise<AxiosResponse<ApiResponse<any>>> => 
+  getDailyReport: (date: string): Promise<AxiosResponse<ApiResponse<any>>> =>
     api.get(API_ENDPOINTS.REPORTS_DAILY, { params: { date } }),
-  getDateRangeReport: (startDate: string, endDate: string): Promise<AxiosResponse<ApiResponse<any>>> => 
-    api.get(API_ENDPOINTS.REPORTS_RANGE, { 
-      params: { startDate, endDate } 
+  getDateRangeReport: (startDate: string, endDate: string): Promise<AxiosResponse<ApiResponse<any>>> =>
+    api.get(API_ENDPOINTS.REPORTS_RANGE, {
+      params: { startDate, endDate }
     }),
 };
 

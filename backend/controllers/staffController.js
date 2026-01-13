@@ -1,6 +1,8 @@
 const Order = require('../models/order');
 const Payment = require('../models/payment');
 const Menu = require('../models/menu');
+const userRepository = require('../repositories/userRepository');
+const bcrypt = require('bcryptjs');
 
 const getOrders = async (req, res) => {
   const { status, page = 1, limit = 20 } = req.query;
@@ -105,9 +107,71 @@ const getReceipt = async (req, res) => {
   return res.json({ success: true, data: receipt });
 };
 
+// Staff Management Functions
+
+const getAllStaff = async (req, res) => {
+  const users = await userRepository.getAll();
+  // Return all users for Owner's User Management
+  return res.json({ success: true, data: users });
+};
+
+const createStaff = async (req, res) => {
+  const { name, email, password, role, status } = req.body;
+
+  const existing = await userRepository.findByEmail(email);
+  if (existing) {
+    return res.status(409).json({ success: false, message: 'Email already registered' });
+  }
+
+  const passwordHash = await bcrypt.hash(String(password), 10);
+  const created = await userRepository.createUser({
+    name,
+    email,
+    passwordHash,
+    role: role || 'staff',
+    status: status || 'active'
+  });
+
+  return res.status(201).json({
+    success: true,
+    data: {
+      id: created.id,
+      email: created.email,
+      role: created.role,
+      name: created.name,
+      status: created.status
+    },
+  });
+};
+
+const updateStaff = async (req, res) => {
+  const { id } = req.params;
+  const { name, email, role, status } = req.body;
+
+  const updated = await userRepository.updateUser(id, { name, email, role, status });
+  if (!updated) {
+    return res.status(404).json({ success: false, message: 'User not found or update failed' });
+  }
+
+  return res.json({ success: true, data: updated });
+};
+
+const deleteStaff = async (req, res) => {
+  const { id } = req.params;
+  const ok = await userRepository.remove(id);
+  if (!ok) {
+    return res.status(404).json({ success: false, message: 'User not found' });
+  }
+  return res.json({ success: true, message: 'Staff deleted successfully' });
+};
+
 module.exports = {
   getOrders,
   updateOrderStatus,
   confirmManualPayment,
   getReceipt,
+  getAllStaff,
+  createStaff,
+  updateStaff,
+  deleteStaff,
 };

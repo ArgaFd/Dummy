@@ -6,9 +6,11 @@ const paymentController = require('../controllers/paymentController');
 const verifyMidtrans = require('../middleware/verifyMidtrans');
 const idempotencyCache = require('../utils/idempotency');
 
+console.log('[DEBUG] Payment Routes File Loaded!'); // DEBUG LOG
+
 const router = express.Router();
 
-// Webhook Midtrans
+// Webhook Midtrans - Paling atas karena dipanggil dari luar (Midtrans)
 router.post(
   '/midtrans-webhook',
   express.json({ type: 'application/json' }),
@@ -16,7 +18,20 @@ router.post(
   paymentController.handleMidtransWebhook
 );
 
-// Proses pembayaran
+// Guest Payments - Tanpa auth
+router.post('/guest/pay', (req, res, next) => {
+  console.log('[PaymentRouter] Hitting POST /guest/pay');
+  next();
+}, paymentController.createGuestDigitalPayment);
+
+
+
+router.post('/guest/manual', (req, res, next) => {
+  console.log('[PaymentRouter] Hitting POST /guest/manual');
+  next();
+}, paymentController.createGuestManualPayment);
+
+// Payment Process (Staff/Owner)
 router.post(
   '/process',
   [
@@ -32,9 +47,33 @@ router.post(
   paymentController.processPayment
 );
 
-// Rute yang sudah ada
+// Get Payment List
+router.get(
+  '/',
+  (req, res, next) => {
+    console.log('[PaymentRouter] MATCHED GET /'); // DEBUG LOG
+    next();
+  },
+  [protect, authorize('staff', 'owner')],
+  paymentController.getPayments
+);
+
+// Update Payment Status (for manual confirmation)
+router.put(
+  '/:id/status',
+  [protect, authorize('staff', 'owner')],
+  paymentController.updatePaymentStatus
+);
+
+// Get Payment Details
+// WARN: This parameterized route can capture other paths if not careful.
+// Ensure specific routes are defined BEFORE this.
 router.get('/:id', protect, paymentController.getPayment);
-router.post('/guest/qris', paymentController.createGuestQrisPayment);
-router.post('/guest/manual', paymentController.createGuestManualPayment);
+
+// Debug: Log if a request falls through
+router.use((req, res) => {
+  console.log(`[PaymentRouter] Unhandled request: ${req.method} ${req.originalUrl}`);
+  res.status(404).json({ success: false, message: 'Endpoint pembayaran tidak ditemukan' });
+});
 
 module.exports = router;

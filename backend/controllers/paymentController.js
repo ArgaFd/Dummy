@@ -9,11 +9,11 @@ const validatePaymentAmount = async (req, res, next) => {
   try {
     const { orderId, amount } = req.body;
     const order = await Order.findOne({ id: orderId });
-    
+
     if (!order) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Pesanan tidak ditemukan' 
+      return res.status(404).json({
+        success: false,
+        message: 'Pesanan tidak ditemukan'
       });
     }
 
@@ -27,12 +27,12 @@ const validatePaymentAmount = async (req, res, next) => {
         newValue: amount,
         ipAddress: req.ip
       });
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Jumlah pembayaran tidak sesuai dengan total pesanan' 
+      return res.status(400).json({
+        success: false,
+        message: 'Jumlah pembayaran tidak sesuai dengan total pesanan'
       });
     }
-    
+
     next();
   } catch (error) {
     next(error);
@@ -43,40 +43,40 @@ const nonceStore = new Map();
 const preventReplay = (req, res, next) => {
   const nonce = req.headers['x-nonce'];
   const timestamp = req.headers['x-timestamp'];
-  
+
   if (!nonce || !timestamp) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Header keamanan tidak lengkap' 
+    return res.status(400).json({
+      success: false,
+      message: 'Header keamanan tidak lengkap'
     });
   }
 
   const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
   if (parseInt(timestamp) < fiveMinutesAgo) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Permintaan kedaluwarsa' 
+    return res.status(400).json({
+      success: false,
+      message: 'Permintaan kedaluwarsa'
     });
   }
 
   const requestId = `${req.ip}:${nonce}`;
   if (nonceStore.has(requestId)) {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Permintaan duplikat terdeteksi' 
+    return res.status(400).json({
+      success: false,
+      message: 'Permintaan duplikat terdeteksi'
     });
   }
 
   nonceStore.set(requestId, true);
   setTimeout(() => nonceStore.delete(requestId), 5 * 60 * 1000);
-  
+
   next();
 };
 
 const handleMidtransWebhook = async (req, res) => {
   try {
     const { order_id: orderId, transaction_status: status, fraud_status: fraudStatus } = req.paymentStatus;
-    
+
     await AuditLog.create({
       action: 'PAYMENT_WEBHOOK_RECEIVED',
       entity: 'Payment',
@@ -87,7 +87,7 @@ const handleMidtransWebhook = async (req, res) => {
 
     const payment = await Payment.findOneAndUpdate(
       { orderId: parseInt(orderId) },
-      { 
+      {
         status: status.toLowerCase(),
         isFraud: fraudStatus === 'deny',
         updatedAt: new Date()
@@ -120,9 +120,9 @@ const processPayment = async (req, res, next) => {
 
     const order = await Order.findOne({ id: Number(orderId) }).lean();
     if (!order) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Pesanan tidak ditemukan' 
+      return res.status(404).json({
+        success: false,
+        message: 'Pesanan tidak ditemukan'
       });
     }
 
@@ -171,30 +171,59 @@ const getPayment = async (req, res) => {
   try {
     const payment = await Payment.findOne({ id: Number(req.params.id) });
     if (!payment) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Pembayaran tidak ditemukan' 
+      return res.status(404).json({
+        success: false,
+        message: 'Pembayaran tidak ditemukan'
       });
     }
     res.json({ success: true, data: payment });
   } catch (error) {
     console.error('Error getting payment:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Gagal mengambil data pembayaran' 
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil data pembayaran'
     });
   }
 };
 
-const createGuestQrisPayment = async (req, res) => {
+const getPayments = async (req, res) => {
+  try {
+    const payments = await Payment.find({}).sort({ createdAt: -1 }).lean();
+    res.json({
+      success: true,
+      data: {
+        payments,
+        totalItems: payments.length,
+        totalPages: 1,
+        currentPage: 1
+      }
+    });
+  } catch (error) {
+    console.error('Error getting payments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal mengambil daftar pembayaran'
+    });
+  }
+};
+
+const createGuestDigitalPayment = async (req, res) => {
   try {
     const { orderId, customer } = req.body;
+
+    // Debug log for Server Key (Masked)
+    const serverKey = process.env.MIDTRANS_SERVER_KEY || '';
+    const maskedKey = serverKey.length > 5
+      ? serverKey.substring(0, 5) + '...' + serverKey.substring(serverKey.length - 3)
+      : 'NOT_SET_OR_TOO_SHORT';
+    console.log(`[PaymentController] Using Server Key: ${maskedKey}`);
+
     const order = await Order.findOne({ id: Number(orderId) }).lean();
-    
+
     if (!order) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Pesanan tidak ditemukan' 
+      return res.status(404).json({
+        success: false,
+        message: 'Pesanan tidak ditemukan'
       });
     }
 
@@ -240,10 +269,10 @@ const createGuestQrisPayment = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Error creating QRIS payment:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Gagal membuat pembayaran QRIS' 
+    console.error('[PaymentController] Error creating Digital payment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal membuat pembayaran digital'
     });
   }
 };
@@ -252,23 +281,23 @@ const createGuestManualPayment = async (req, res) => {
   try {
     const { orderId } = req.body;
     const order = await Order.findOne({ id: Number(orderId) }).lean();
-    
+
     if (!order) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Pesanan tidak ditemukan' 
+      return res.status(404).json({
+        success: false,
+        message: 'Pesanan tidak ditemukan'
       });
     }
 
-    const existing = await Payment.findOne({ 
-      orderId: Number(orderId), 
-      status: { $in: ['pending', 'paid'] } 
+    const existing = await Payment.findOne({
+      orderId: Number(orderId),
+      status: { $in: ['pending', 'paid'] }
     }).lean();
 
     if (existing) {
-      return res.json({ 
-        success: true, 
-        data: { payment: existing } 
+      return res.json({
+        success: true,
+        data: { payment: existing }
       });
     }
 
@@ -296,15 +325,73 @@ const createGuestManualPayment = async (req, res) => {
       userAgent: req.headers['user-agent']
     });
 
-    res.json({ 
-      success: true, 
-      data: { payment: payment.toObject() } 
+    res.json({
+      success: true,
+      data: { payment: payment.toObject() }
     });
   } catch (error) {
     console.error('Error creating manual payment:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Gagal membuat pembayaran manual' 
+    res.status(500).json({
+      success: false,
+      message: 'Gagal membuat pembayaran manual'
+    });
+  }
+};
+
+const updatePaymentStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const userId = req.user?.id;
+
+    if (!['pending', 'paid', 'failed'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status pembayaran tidak valid'
+      });
+    }
+
+    const payment = await Payment.findOne({ id: Number(id) });
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pembayaran tidak ditemukan'
+      });
+    }
+
+    // Update payment status
+    payment.status = status;
+    payment.processedBy = userId;
+    payment.updatedAt = new Date();
+    await payment.save();
+
+    // If payment is paid, update order status to completed
+    if (status === 'paid') {
+      await Order.findOneAndUpdate(
+        { id: payment.orderId },
+        { status: 'completed' }
+      );
+    }
+
+    await AuditLog.create({
+      userId: userId ? new mongoose.Types.ObjectId(userId) : null,
+      action: 'PAYMENT_STATUS_UPDATED',
+      entity: 'Payment',
+      entityId: payment.id,
+      newValue: JSON.stringify({ status }),
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent']
+    });
+
+    res.json({
+      success: true,
+      data: payment
+    });
+  } catch (error) {
+    console.error('Error updating payment status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Gagal memperbarui status pembayaran'
     });
   }
 };
@@ -315,6 +402,8 @@ module.exports = {
   preventReplay,
   handleMidtransWebhook,
   getPayment,
-  createGuestQrisPayment,
-  createGuestManualPayment
+  getPayments,
+  createGuestDigitalPayment,
+  createGuestManualPayment,
+  updatePaymentStatus
 };

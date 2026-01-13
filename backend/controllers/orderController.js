@@ -5,16 +5,26 @@ const { recordCreatedOrder } = require('../services/salesStatService');
 
 const buildItemsWithPrice = async (items) => {
   const ids = items.map((i) => Number(i.menuId));
-  const menus = await Menu.find({ id: { $in: ids } }).lean();
-  const priceMap = new Map(menus.map((m) => [m.id, m.price]));
+  console.log('[OrderController] Building items for IDs:', ids);
 
-  return items.map((it) => ({
-    id: null,
-    menuId: Number(it.menuId),
-    quantity: Number(it.quantity),
-    unitPrice: Number(priceMap.get(Number(it.menuId)) || 0),
-    status: 'pending',
-  }));
+  const menus = await Menu.find({ id: { $in: ids } }).lean();
+  console.log('[OrderController] Found menus count:', menus.length);
+
+  const priceMap = new Map(menus.map((m) => [m.id, m.price]));
+  console.log('[OrderController] Price Map keys:', [...priceMap.keys()]);
+
+  return items.map((it) => {
+    const price = Number(priceMap.get(Number(it.menuId)) || 0);
+    if (price === 0) console.warn(`[OrderController] WARN: Price for menuId ${it.menuId} is 0 or not found`);
+
+    return {
+      id: null,
+      menuId: Number(it.menuId),
+      quantity: Number(it.quantity),
+      unitPrice: price,
+      status: 'pending',
+    };
+  });
 };
 
 const computeTotal = (items) => items.reduce((sum, it) => sum + Number(it.unitPrice) * Number(it.quantity), 0);

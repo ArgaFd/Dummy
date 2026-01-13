@@ -35,9 +35,9 @@ const RegisterPage = () => {
       setError('');
       setSuccess('');
       setIsLoading(true);
-      
+
       const response = await authAPI.register(data);
-      
+
       if (response.data.success) {
         setSuccess('Registrasi berhasil! Silakan login untuk melanjutkan.');
         setTimeout(() => {
@@ -54,158 +54,243 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Buat akun baru
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Atau{' '}
-            <Link
-              to="/login"
-              className="font-medium text-primary-600 hover:text-primary-500"
-            >
-              masuk ke akun yang sudah ada
-            </Link>
-          </p>
-        </div>
-        
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-            {error}
-          </div>
-        )}
-        
-        {success && (
-          <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded">
-            {success}
-          </div>
-        )}
-        
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Nama Lengkap
-              </label>
-              <input
-                {...register('name', { 
-                  required: 'Nama is required',
-                  minLength: {
-                    value: 2,
-                    message: 'Nama must be at least 2 characters'
-                  }
-                })}
-                type="text"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="Masukkan nama lengkap"
-              />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name.message as string}</p>
-              )}
-            </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated Gradient Background */}
+      <div className="absolute inset-0 gradient-bg-animated"></div>
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email
-              </label>
-              <input
-                {...register('email', { 
-                  required: 'Email is required',
-                  pattern: {
-                    value: /\S+@\S+\.\S+/,
-                    message: 'Email is not valid'
-                  }
-                })}
-                type="email"
-                autoComplete="email"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="Masukkan email"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message as string}</p>
-              )}
-            </div>
+      {/* Decorative Elements */}
+      <div className="absolute top-10 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+      <div className="absolute top-20 right-10 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+      <div className="absolute bottom-10 left-1/2 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                {...register('password', { 
-                  required: 'Password is required',
-                  minLength: {
-                    value: 6,
-                    message: 'Password must be at least 6 characters'
-                  }
-                })}
-                type="password"
-                autoComplete="new-password"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="Masukkan password"
-              />
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message as string}</p>
-              )}
+      {/* Content */}
+      <div className="relative z-10 min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8 animate-fade-in">
+          {/* Header */}
+          <div className="text-center">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl flex items-center justify-center shadow-2xl">
+                <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              </div>
             </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Konfirmasi Password
-              </label>
-              <input
-                {...register('confirmPassword', { 
-                  required: 'Konfirmasi password is required',
-                  validate: value => value === password || 'Password tidak cocok'
-                })}
-                type="password"
-                autoComplete="new-password"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-                placeholder="Konfirmasi password"
-              />
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message as string}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                Role
-              </label>
-              <select
-                {...register('role')}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
-              >
-                <option value="owner">Owner</option>
-                <option value="cashier">Cashier</option>
-              </select>
-            </div>
+            <h2 className="text-4xl font-black text-white mb-2">
+              Buat Akun Baru
+            </h2>
+            <p className="text-lg text-white/80">
+              Daftar untuk memulai perjalanan Anda
+            </p>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          {/* Register Card */}
+          <div className="glass-card p-8 animate-slide-in-up">
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 bg-red-500/10 backdrop-blur-sm border border-red-500/20 text-red-100 px-4 py-3 rounded-xl animate-scale-in">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
-                  Mendaftar...
-                </>
-              ) : (
-                'Daftar Sekarang'
-              )}
-            </button>
+                  <span>{error}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="mb-6 bg-green-500/10 backdrop-blur-sm border border-green-500/20 text-green-100 px-4 py-3 rounded-xl animate-scale-in">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>{success}</span>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              {/* Name Input */}
+              <div>
+                <label htmlFor="name" className="block text-sm font-semibold text-white mb-2">
+                  Nama Lengkap
+                </label>
+                <input
+                  {...register('name', {
+                    required: 'Nama harus diisi',
+                    minLength: {
+                      value: 2,
+                      message: 'Nama minimal 2 karakter'
+                    }
+                  })}
+                  type="text"
+                  className="input-modern"
+                  placeholder="Masukkan nama lengkap"
+                />
+                {errors.name && (
+                  <p className="mt-2 text-sm text-red-300 animate-slide-in-up">{errors.name.message as string}</p>
+                )}
+              </div>
+
+              {/* Email Input */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold text-white mb-2">
+                  Email
+                </label>
+                <input
+                  {...register('email', {
+                    required: 'Email harus diisi',
+                    pattern: {
+                      value: /\S+@\S+\.\S+/,
+                      message: 'Format email tidak valid'
+                    }
+                  })}
+                  type="email"
+                  autoComplete="email"
+                  className="input-modern"
+                  placeholder="nama@email.com"
+                />
+                {errors.email && (
+                  <p className="mt-2 text-sm text-red-300 animate-slide-in-up">{errors.email.message as string}</p>
+                )}
+              </div>
+
+              {/* Password Input */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-semibold text-white mb-2">
+                  Password
+                </label>
+                <input
+                  {...register('password', {
+                    required: 'Password harus diisi',
+                    minLength: {
+                      value: 6,
+                      message: 'Password minimal 6 karakter'
+                    }
+                  })}
+                  type="password"
+                  autoComplete="new-password"
+                  className="input-modern"
+                  placeholder="••••••••"
+                />
+                {errors.password && (
+                  <p className="mt-2 text-sm text-red-300 animate-slide-in-up">{errors.password.message as string}</p>
+                )}
+              </div>
+
+              {/* Confirm Password Input */}
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-white mb-2">
+                  Konfirmasi Password
+                </label>
+                <input
+                  {...register('confirmPassword', {
+                    required: 'Konfirmasi password harus diisi',
+                    validate: value => value === password || 'Password tidak cocok'
+                  })}
+                  type="password"
+                  autoComplete="new-password"
+                  className="input-modern"
+                  placeholder="••••••••"
+                />
+                {errors.confirmPassword && (
+                  <p className="mt-2 text-sm text-red-300 animate-slide-in-up">{errors.confirmPassword.message as string}</p>
+                )}
+              </div>
+
+              {/* Role Select */}
+              <div>
+                <label htmlFor="role" className="block text-sm font-semibold text-white mb-2">
+                  Role
+                </label>
+                <select
+                  {...register('role')}
+                  className="input-modern"
+                >
+                  <option value="owner">Owner</option>
+                  <option value="cashier">Cashier</option>
+                </select>
+              </div>
+
+              {/* Submit Button */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="btn-modern btn-gradient-accent w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="spinner-modern h-5 w-5 mr-3 border-white/30 border-t-white"></div>
+                      Mendaftar...
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center">
+                      <span>Daftar Sekarang</span>
+                      <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
+                    </div>
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {/* Login Link */}
+            <div className="mt-6 text-center">
+              <p className="text-sm text-white/80">
+                Sudah punya akun?{' '}
+                <Link
+                  to="/login"
+                  className="font-bold text-pink-300 hover:text-pink-200 transition-colors duration-200"
+                >
+                  Masuk di sini
+                </Link>
+              </p>
+            </div>
           </div>
-        </form>
+
+          {/* Footer */}
+          <div className="text-center">
+            <p className="text-sm text-white/60">
+              © 2024 Restaurant App. All rights reserved.
+            </p>
+          </div>
+        </div>
       </div>
+
+      {/* Custom Animations */}
+      <style>{`
+        @keyframes blob {
+          0% {
+            transform: translate(0px, 0px) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+          100% {
+            transform: translate(0px, 0px) scale(1);
+          }
+        }
+        
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+        
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+        
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+      `}</style>
     </div>
   );
 };
 
 export default RegisterPage;
+
