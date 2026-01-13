@@ -6,22 +6,22 @@ interface MockPaymentProps {
   amount: number;
 }
 
-const MockPayment: React.FC<MockPaymentProps> = ({ 
-  onPaymentSuccess, 
-  onPaymentCancel, 
-  amount 
+const MockPayment: React.FC<MockPaymentProps> = ({
+  onPaymentSuccess,
+  onPaymentCancel,
+  amount
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleMockPayment = async () => {
     setIsProcessing(true);
-    
-    // Simulate payment processing
+
+
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Generate mock payment ID
+
+
     const paymentId = 'MOCK_' + Date.now();
-    
+
     setIsProcessing(false);
     onPaymentSuccess(paymentId);
   };
@@ -35,14 +35,14 @@ const MockPayment: React.FC<MockPaymentProps> = ({
           <p className="text-gray-600 mb-6">
             Ini adalah sistem pembayaran testing untuk development
           </p>
-          
+
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <div className="text-sm text-gray-600 mb-1">Total Pembayaran:</div>
             <div className="text-3xl font-bold text-orange-600">
               Rp {amount.toLocaleString('id-ID')}
             </div>
           </div>
-          
+
           <div className="space-y-3">
             <button
               onClick={handleMockPayment}
@@ -58,7 +58,7 @@ const MockPayment: React.FC<MockPaymentProps> = ({
                 '✅ Bayar Sekarang (Testing)'
               )}
             </button>
-            
+
             <button
               onClick={onPaymentCancel}
               disabled={isProcessing}
@@ -67,7 +67,7 @@ const MockPayment: React.FC<MockPaymentProps> = ({
               ❌ Batal
             </button>
           </div>
-          
+
           <div className="mt-4 text-xs text-gray-500">
             <p>⚠️ Ini adalah payment testing</p>
             <p>Tidak ada uang asli yang ditransfer</p>
