@@ -1,8 +1,8 @@
 const jwt = require('jsonwebtoken');
 
-const usersStore = require('../stores/usersStore');
+const userRepository = require('../repositories/userRepository');
 
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization || '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -17,7 +17,7 @@ const protect = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, secret);
-    const user = usersStore.getById(decoded.sub);
+    const user = await userRepository.findById(decoded.sub);
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });

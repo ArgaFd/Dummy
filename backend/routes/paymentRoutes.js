@@ -1,31 +1,40 @@
 const express = require('express');
-const { body, param } = require('express-validator');
+const { body } = require('express-validator');
 const { protect, authorize } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
-const {
-  processPayment,
-  getPayment,
-  paymentWebhook
-} = require('../controllers/paymentController');
+const paymentController = require('../controllers/paymentController');
+const verifyMidtrans = require('../middleware/verifyMidtrans');
+const idempotencyCache = require('../utils/idempotency');
 
 const router = express.Router();
 
-// Public webhook endpoint (no authentication required for webhooks)
-router.post('/webhook', paymentWebhook);
+// Webhook Midtrans
+router.post(
+  '/midtrans-webhook',
+  express.json({ type: 'application/json' }),
+  verifyMidtrans,
+  paymentController.handleMidtransWebhook
+);
 
-// Protected routes (require authentication)
-router.use(protect);
+// Proses pembayaran
+router.post(
+  '/process',
+  [
+    protect,
+    authorize('staff', 'owner'),
+    body('orderId').isInt().withMessage('ID Pesanan harus berupa angka'),
+    body('amount').isFloat({ min: 0 }).withMessage('Jumlah tidak valid'),
+    body('paymentMethod').isIn(['cash', 'qris', 'manual']).withMessage('Metode pembayaran tidak valid'),
+    validate
+  ],
+  paymentController.preventReplay,
+  paymentController.validatePaymentAmount,
+  paymentController.processPayment
+);
 
-// Process payment
-router.post('/process', [
-  body('orderId', 'Order ID is required').isInt(),
-  body('paymentMethod', 'Payment method is required').isIn(['cash', 'midtrans']),
-  body('paymentDetails', 'Payment details must be an object').optional().isObject()
-], validate, processPayment);
-
-// Get payment details
-router.get('/:id', [
-  param('id', 'Please provide a valid payment ID').isInt()
-], validate, getPayment);
+// Rute yang sudah ada
+router.get('/:id', protect, paymentController.getPayment);
+router.post('/guest/qris', paymentController.createGuestQrisPayment);
+router.post('/guest/manual', paymentController.createGuestManualPayment);
 
 module.exports = router;

@@ -1,207 +1,254 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useEffect, useState } from 'react';
+import type { UserRole } from '../types';
+import { FiMenu, FiX, FiLogOut, FiHome, FiUsers, FiCoffee, FiList, FiDollarSign, FiPieChart } from 'react-icons/fi';
 
-interface RoleBasedDashboardProps {
-  userRole: string;
+interface MenuItem {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  link: string;
+  color: string;
+  roles: UserRole[];
 }
 
-const RoleBasedDashboard: React.FC<RoleBasedDashboardProps> = ({ userRole }) => {
-  const { logout } = useAuth();
-
+const menuItems: MenuItem[] = [
   // Owner menu items
-  const ownerMenuItems = [
-    {
-      title: 'User Management',
-      description: 'Kelola akun karyawan',
-      icon: '👥',
-      link: '/users',
-      color: 'bg-blue-500'
-    },
-    {
-      title: 'Menu Management',
-      description: 'Kelola menu restoran',
-      icon: '🍽️',
-      link: '/menu-management',
-      color: 'bg-green-500'
-    },
-    {
-      title: 'Orders',
-      description: 'Lihat semua pesanan',
-      icon: '📋',
-      link: '/orders',
-      color: 'bg-purple-500'
-    },
-    {
-      title: 'Reports',
-      description: 'Laporan penjualan & analytics',
-      icon: '📊',
-      link: '/reports',
-      color: 'bg-orange-500'
-    }
-  ];
+  {
+    title: 'Dashboard',
+    description: 'Ringkasan bisnis',
+    icon: <FiHome size={20} />,
+    link: '/owner/dashboard',
+    color: 'bg-indigo-500',
+    roles: ['owner']
+  },
+  {
+    title: 'Manajemen Pengguna',
+    description: 'Kelola akun karyawan',
+    icon: <FiUsers size={20} />,
+    link: '/users',
+    color: 'bg-blue-500',
+    roles: ['owner']
+  },
+  {
+    title: 'Manajemen Menu',
+    description: 'Kelola daftar menu',
+    icon: <FiCoffee size={20} />,
+    link: '/menu-management',
+    color: 'bg-green-500',
+    roles: ['owner']
+  },
+  // Staff menu items - simplified for efficiency
+  {
+    title: 'Daftar Pesanan',
+    description: 'Kelola pesanan aktif',
+    icon: <FiList size={20} />,
+    link: '/staff/orders',
+    color: 'bg-green-500',
+    roles: ['staff']
+  },
+  {
+    title: 'Pembayaran',
+    description: 'Proses pembayaran',
+    icon: <FiDollarSign size={20} />,
+    link: '/staff/payments',
+    color: 'bg-yellow-500',
+    roles: ['staff']
+  },
+  // Shared menu items
+  {
+    title: 'Laporan',
+    description: 'Lihat laporan',
+    icon: <FiPieChart size={20} />,
+    link: '/reports',
+    color: 'bg-pink-500',
+    roles: ['owner']
+  }
+];
 
-  // Cashier menu items
-  const cashierMenuItems = [
-    {
-      title: 'Orders',
-      description: 'Kelola pesanan aktif',
-      icon: '📋',
-      link: '/orders',
-      color: 'bg-purple-500'
-    },
-    {
-      title: 'Payments',
-      description: 'Proses pembayaran',
-      icon: '💳',
-      link: '/payments',
-      color: 'bg-green-500'
-    }
-  ];
+interface RoleBasedDashboardProps {
+  userRole: UserRole;
+  children?: React.ReactNode;
+}
 
-  const menuItems = userRole === 'owner' ? ownerMenuItems : cashierMenuItems;
+const RoleBasedDashboard: React.FC<RoleBasedDashboardProps> = ({ userRole, children }) => {
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Filter menu items based on user role
+  const filteredMenuItems = menuItems.filter(item => 
+    item.roles.includes(userRole)
+  );
+
+  // Redirect to appropriate dashboard based on user role
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    setIsLoading(false);
+    
+    // Redirect to first menu item if at root
+    if (location.pathname === '/' || location.pathname === '/dashboard') {
+      const firstMenuItem = filteredMenuItems[0];
+      if (firstMenuItem) {
+        navigate(firstMenuItem.link);
+      }
+    }
+  }, [user, navigate, location.pathname, filteredMenuItems]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Restaurant Dashboard
-              </h1>
-              <p className="text-sm text-gray-500">
-                Welcome back, {userRole === 'owner' ? 'Owner' : 'Cashier'}
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800">
-                {userRole === 'owner' ? 'Owner' : 'Cashier'}
-              </span>
-              <button
-                onClick={logout}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+    <div className="h-screen flex bg-gray-100">
+      {/* Mobile sidebar - overlay */}
+      <div className={`lg:hidden fixed inset-0 z-50 ${isSidebarOpen ? 'block' : 'hidden'}`}>
+        <div 
+          className="fixed inset-0 bg-gray-600 bg-opacity-75" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+        <div className="relative flex flex-col w-64 h-full bg-white">
+          <div className="flex items-center justify-between h-16 px-4 bg-indigo-600">
+            <span className="text-xl font-semibold text-white">Resto App</span>
+            <button onClick={() => setIsSidebarOpen(false)} className="p-1 rounded-md text-white hover:bg-indigo-500">
+              <FiX size={24} />
+            </button>
+          </div>
+          <nav className="flex-1 overflow-y-auto">
+            {filteredMenuItems.map((item, index) => (
+              <Link
+                key={index}
+                to={item.link}
+                className={`flex items-center px-4 py-3 text-sm font-medium ${
+                  location.pathname === item.link 
+                    ? 'bg-indigo-50 text-indigo-700 border-r-4 border-indigo-500' 
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsSidebarOpen(false)}
               >
-                Logout
+                <span className={`flex items-center justify-center w-8 h-8 rounded-full ${item.color} text-white mr-3`}>
+                  {item.icon}
+                </span>
+                {item.title}
+              </Link>
+            ))}
+          </nav>
+          <div className="p-4 border-t border-gray-200">
+            <button onClick={logout} className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 rounded-md hover:bg-red-50">
+              <span className="mr-3"><FiLogOut size={20} /></span>
+              Keluar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop sidebar - fixed */}
+      <div className="hidden lg:flex lg:flex-shrink-0">
+        <div className="flex flex-col w-64 border-r border-gray-200 bg-white">
+          <div className="flex items-center h-16 px-4 bg-indigo-600">
+            <span className="text-xl font-semibold text-white">Resto App</span>
+          </div>
+          <div className="flex flex-col flex-grow overflow-y-auto">
+            <nav className="flex-1 px-2 py-4 space-y-1">
+              {filteredMenuItems.map((item, index) => (
+                <Link
+                  key={index}
+                  to={item.link}
+                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-md ${
+                    location.pathname === item.link 
+                      ? 'bg-indigo-50 text-indigo-700' 
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className={`flex items-center justify-center w-8 h-8 rounded-full ${item.color} text-white mr-3`}>
+                    {item.icon}
+                  </span>
+                  {item.title}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex items-center">
+              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold">
+                {user?.name?.charAt(0) || 'U'}
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-700">{user?.name || 'User'}</p>
+                <p className="text-xs font-medium text-gray-500">{userRole === 'owner' ? 'Owner' : 'Staff'}</p>
+              </div>
+              <button onClick={logout} className="ml-auto p-1 text-gray-400 hover:text-gray-500">
+                <FiLogOut size={20} />
               </button>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          {/* Menu Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {menuItems.map((item, index) => (
-              <Link
-                key={index}
-                to={item.link}
-                className="group relative bg-white overflow-hidden rounded-lg shadow hover:shadow-lg transition-shadow duration-200"
+      {/* Main content - takes remaining space */}
+      <div className="flex flex-col flex-1 min-w-0">
+        {/* Top header - always visible */}
+        <header className="bg-white shadow-sm border-b border-gray-200">
+          <div className="flex items-center justify-between px-4 py-3 sm:px-6">
+            <div className="flex items-center">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-md text-gray-500 hover:bg-gray-100"
               >
-                <div className="p-6">
-                  <div className="flex items-center">
-                    <div className={`flex-shrink-0 p-3 rounded-lg ${item.color}`}>
-                      <span className="text-2xl">{item.icon}</span>
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-medium text-gray-900 group-hover:text-gray-600">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {item.description}
-                      </p>
-                    </div>
-                  </div>
+                <FiMenu size={24} />
+              </button>
+              <h1 className="ml-2 lg:ml-0 text-lg font-medium text-gray-900">
+                {filteredMenuItems.find(item => item.link === location.pathname)?.title || 'Dashboard'}
+              </h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="hidden sm:flex items-center">
+                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-semibold text-sm">
+                  {user?.name?.charAt(0) || 'U'}
                 </div>
-                <div className="bg-gray-50 px-6 py-3">
-                  <div className="text-sm font-medium text-gray-500 group-hover:text-gray-700">
-                    Access →
-                  </div>
-                </div>
-              </Link>
-            ))}
+                <span className="ml-2 text-sm font-medium text-gray-700 hidden md:block">
+                  {user?.name || 'User'}
+                </span>
+              </div>
+              <button onClick={logout} className="p-2 rounded-md text-gray-500 hover:bg-gray-100">
+                <FiLogOut size={20} />
+              </button>
+            </div>
           </div>
+        </header>
 
-          {/* Quick Stats (Owner Only) */}
-          {userRole === 'owner' && (
-            <div className="mt-8">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Stats</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white overflow-hidden shadow rounded-lg">
-                  <div className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-medium">👥</span>
-                        </div>
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">
-                            Total Staff
-                          </dt>
-                          <dd className="text-lg font-medium text-gray-900">
-                            {/* This would come from API */}
-                            5
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white overflow-hidden shadow rounded-lg">
-                  <div className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-medium">🍽️</span>
-                        </div>
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">
-                            Menu Items
-                          </dt>
-                          <dd className="text-lg font-medium text-gray-900">
-                            {/* This would come from API */}
-                            25
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white overflow-hidden shadow rounded-lg">
-                  <div className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-sm font-medium">📋</span>
-                        </div>
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">
-                            Today's Orders
-                          </dt>
-                          <dd className="text-lg font-medium text-gray-900">
-                            {/* This would come from API */}
-                            12
-                          </dd>
-                        </dl>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        {/* Page content - scrollable */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="py-6 px-4 sm:px-6 lg:px-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {filteredMenuItems.find(item => item.link === location.pathname)?.title || 'Selamat Datang'}
+              </h2>
+              <p className="mt-1 text-sm text-gray-600">
+                {filteredMenuItems.find(item => item.link === location.pathname)?.description || ''}
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-lg shadow">
+              <div className="p-4 sm:p-6">
+                {children}
               </div>
             </div>
-          )}
-        </div>
-      </main>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

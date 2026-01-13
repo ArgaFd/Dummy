@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import NotFoundPage from './pages/NotFoundPage';
+import UnauthorizedPage from './pages/UnauthorizedPage';
 import DashboardPage from './pages/DashboardPage';
 
 // Layout Components
@@ -76,16 +77,17 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/scan" element={<QRScanner />} />
           <Route path="/menu" element={<MenuPage />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
           
-          {/* Admin Routes */}
+          {/* Owner Routes */}
           <Route element={<AdminRoute />}>
-            <Route path="/admin/dashboard" element={<DashboardPage />} />
-            <Route path="/admin/*" element={<AdminLayout />} />
+            <Route path="/owner/dashboard" element={<DashboardPage />} />
+            <Route path="/owner/*" element={<AdminLayout />} />
           </Route>
           
           {/* Staff Routes */}
           <Route element={<StaffRoute />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/staff/orders" element={<DashboardPage />} />
             <Route path="/staff/*" element={<StaffLayout />} />
           </Route>
           

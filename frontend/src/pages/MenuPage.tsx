@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { menuAPI, orderAPI, paymentAPI, type MenuItem } from '../services/api';
 
 interface CartItem {
@@ -10,6 +10,7 @@ interface CartItem {
 const MenuPage = () => {
   const [searchParams] = useSearchParams();
   const tableNumber = searchParams.get('table');
+  const [selectedTableNumber, setSelectedTableNumber] = useState<number>(parseInt(tableNumber || '1'));
   const [activeCategory, setActiveCategory] = useState('semua');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
@@ -17,6 +18,7 @@ const MenuPage = () => {
   const [loading, setLoading] = useState(true);
   const [customerName, setCustomerName] = useState('');
   const [showCheckout, setShowCheckout] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'qris' | 'manual'>('qris');
 
   const categories = [
     { id: 'semua', name: 'Semua Menu', icon: '🍽️' },
@@ -85,40 +87,57 @@ const MenuPage = () => {
       return;
     }
 
+    if (!selectedTableNumber || Number.isNaN(selectedTableNumber) || selectedTableNumber < 1) {
+      alert('Silakan masukkan nomor meja yang valid');
+      return;
+    }
+
     if (cart.length === 0) {
       alert('Keranjang masih kosong');
       return;
     }
 
     try {
-      // Create order
       const orderData = {
-        tableNumber: parseInt(tableNumber || '1'),
+        tableNumber: selectedTableNumber,
         customerName: customerName.trim(),
-        items: cart.map(item => ({
+        items: cart.map((item) => ({
           menuId: item.id,
-          quantity: item.quantity
-        }))
+          quantity: item.quantity,
+        })),
       };
 
-      const orderResponse = await orderAPI.create(orderData);
+      // Guest flow: no login required
+      const orderResponse = await orderAPI.createGuest(orderData);
       if (orderResponse.data.success) {
         const order = orderResponse.data.data;
 
-        // Create payment
-        const paymentData = {
-          order_id: order.id,
-          amount: order.total_amount,
-          payment_method: 'cash'
-        };
+        if (paymentMethod === 'manual') {
+          const paymentResponse = await paymentAPI.guestManual({ orderId: order.id });
+          if (paymentResponse.data.success) {
+            alert('Pesanan berhasil dibuat. Silakan lakukan pembayaran manual ke kasir.');
+            setCart([]);
+            setShowCart(false);
+            setShowCheckout(false);
+            setCustomerName('');
+          }
+          return;
+        }
 
-        const paymentResponse = await paymentAPI.create(paymentData);
-        if (paymentResponse.data.success) {
-          alert('Pesanan dan pembayaran berhasil diproses!');
-          setCart([]);
-          setShowCart(false);
-          setShowCheckout(false);
-          setCustomerName('');
+        const qrisResponse = await paymentAPI.guestQris({
+          orderId: order.id,
+          customer: {
+            first_name: customerName.trim(),
+          },
+        });
+
+        if (qrisResponse.data.success) {
+          const redirectUrl = qrisResponse.data.data?.midtrans?.redirect_url;
+          if (redirectUrl) {
+            window.location.href = redirectUrl;
+            return;
+          }
+          alert('Gagal memulai pembayaran QRIS. Silakan coba lagi.');
         }
       }
     } catch (error) {
@@ -126,23 +145,6 @@ const MenuPage = () => {
       alert('Gagal memproses pesanan. Silakan coba lagi.');
     }
   };
-
-  if (!tableNumber) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Meja Tidak Dikenali</h2>
-          <p className="mb-6">Silakan scan QR code yang tersedia di meja Anda</p>
-          <Link 
-            to="/scan" 
-            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            Kembali ke Scanner
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -171,7 +173,7 @@ const MenuPage = () => {
                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-gray-900">Digital Menu</h1>
                 <div className="flex items-center space-x-2 text-sm text-gray-600">
                   <span className="bg-orange-100 text-orange-600 px-2 py-1 rounded-full font-semibold">
-                    🪑 Meja {tableNumber}
+                    🪑 Meja {selectedTableNumber}
                   </span>
                   <span className="hidden lg:inline text-gray-400">•</span>
                   <span className="hidden lg:inline text-gray-600">{filteredItems.length} items available</span>
@@ -437,6 +439,18 @@ const MenuPage = () => {
                     
                     <div className="mb-6">
                       <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nomor Meja
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={selectedTableNumber}
+                        onChange={(e) => setSelectedTableNumber(parseInt(e.target.value || '1'))}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 mb-4"
+                        placeholder="Masukkan nomor meja"
+                      />
+
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
                         Nama Customer
                       </label>
                       <input
@@ -470,6 +484,36 @@ const MenuPage = () => {
                         </div>
                       </div>
                     </div>
+
+                    <div className="mb-2">
+                      <h4 className="font-bold text-gray-900 mb-3">Metode Pembayaran</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMethod('qris')}
+                          className={`p-4 rounded-xl border text-left transition-all ${
+                            paymentMethod === 'qris'
+                              ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
+                              : 'border-gray-200 bg-white hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="font-black text-gray-900">QRIS</div>
+                          <div className="text-xs text-gray-600 mt-1">Bayar via QRIS (Midtrans)</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPaymentMethod('manual')}
+                          className={`p-4 rounded-xl border text-left transition-all ${
+                            paymentMethod === 'manual'
+                              ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
+                              : 'border-gray-200 bg-white hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="font-black text-gray-900">Manual</div>
+                          <div className="text-xs text-gray-600 mt-1">Bayar ke kasir</div>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -480,7 +524,7 @@ const MenuPage = () => {
                   onClick={handleCheckout}
                   disabled={!customerName.trim()}
                 >
-                  Place Order
+                  {paymentMethod === 'qris' ? 'Bayar dengan QRIS' : 'Buat Pesanan'}
                 </button>
                 <button
                   type="button"

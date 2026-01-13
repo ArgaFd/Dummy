@@ -4,13 +4,28 @@ const { protect, authorize } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const {
   createOrder,
+  createGuestOrder,
   getOrders,
   getOrder,
+  getGuestOrder,
   updateOrderStatus,
   updateOrderItemStatus
 } = require('../controllers/orderController');
 
 const router = express.Router();
+
+// Guest (no login) - create order from QR menu flow
+router.post('/guest', [
+  body('tableNumber', 'Table number is required').isInt({ min: 1 }),
+  body('customerName', 'Customer name is required').not().isEmpty(),
+  body('items', 'Order items are required').isArray({ min: 1 }),
+  body('items.*.menuId', 'Menu item ID is required').isInt(),
+  body('items.*.quantity', 'Quantity must be at least 1').isInt({ min: 1 }),
+], validate, createGuestOrder);
+
+router.get('/guest/:id', [
+  param('id', 'Please provide a valid order ID').isInt(),
+], validate, getGuestOrder);
 
 // Protected routes (require authentication)
 router.use(protect);
